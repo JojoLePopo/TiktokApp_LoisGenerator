@@ -275,7 +275,7 @@ def generate_audio(text: str) -> tuple:
 # 🎬  ÉTAPE 4 — Montage vidéo (MoviePy)
 # ============================================================
 
-BACKGROUND_VIDEO = "background.mp4"  # Vidéo de fond 9:16 à fournir
+BACKGROUND_VIDEO = "backgroundtest.mp4"  # Vidéo de fond 9:16 à fournir
 OUTPUT_VIDEO = "tiktok_final.mp4"
 LAST_NEWS_FILE = "last_news.json"  # Fichier pour stocker la dernière actualité traitée
 
