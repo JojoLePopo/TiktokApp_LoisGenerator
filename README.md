@@ -1,4 +1,4 @@
-# TikTokNews
+# TiktokApp_LoisGenerator
 
 Automatisation de création de vidéos TikTok d'actualités législatives.
 
