@@ -4,3 +4,6 @@ moviepy==1.0.3
 python-dotenv
 Pillow
 numpy
+edge-tts
+aiohttp
+playsound==1.2.2

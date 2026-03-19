@@ -128,7 +128,7 @@ def rewrite_with_gemini(loi: dict) -> str:
         "Le script DOIT contenir :\n"
         "1. Une ACCROCHE impactante, en mentionnant le titre de la loi : 'Une nouvelle loi vient d'être votée, '"
         "laisse moi t'expliquer en moins d'une minute !'.\n"
-        "2. Un RÉSUMÉ CLAIR, rapide et accessible de ce que ça change concrètement, le texte doit faire environ 110 mots, et être rédigé de manière à ce que même quelqu'un sans aucune connaissance juridique puisse comprendre les impacts majeurs de la loi\n"
+        "2. Un RÉSUMÉ CLAIR, rapide et accessible de ce que ça change concrètement, le texte doit faire environ 110 mots (pas plus de 150), et être rédigé de manière à ce que même quelqu'un sans aucune connaissance juridique puisse comprendre les impacts majeurs de la loi\n"
         "Un exemple concret d'application de la loi dans la vie quotidienne pour rendre ça plus vivant.\n"
         "3. Une QUESTION finale engageante pour pousser les commentaires.\n\n"
         "Renvoie UNIQUEMENT le texte du script, sans indication de section, "
@@ -149,10 +149,10 @@ def rewrite_with_gemini(loi: dict) -> str:
 AUDIO_PATH = "voiceover.mp3"
 # Voix françaises naturelles : fr-FR-VivienneMultilingualNeural (femme),
 #                               fr-FR-RemyMultilingualNeural (homme)
-EDGE_VOICE = os.getenv("EDGE_VOICE", "fr-FR-RemyMultilingualNeural")
+EDGE_VOICE = os.getenv("EDGE_VOICE", "fr-FR-VivienneMultilingualNeural")
 TIKTOK_VOICE = os.getenv("TIKTOK_VOICE", "FR_MALE_2")
-PRIMARY_TTS_PROVIDER = os.getenv("PRIMARY_TTS_PROVIDER", "tiktok").strip().lower()
-FALLBACK_TTS_PROVIDER = os.getenv("FALLBACK_TTS_PROVIDER", "edge").strip().lower()
+PRIMARY_TTS_PROVIDER = os.getenv("PRIMARY_TTS_PROVIDER", "edge").strip().lower()
+FALLBACK_TTS_PROVIDER = os.getenv("FALLBACK_TTS_PROVIDER", "tiktok").strip().lower()
 
 
 def _extract_source_words_with_punctuation(text: str) -> list:
@@ -275,7 +275,7 @@ def generate_audio(text: str) -> tuple:
 # 🎬  ÉTAPE 4 — Montage vidéo (MoviePy)
 # ============================================================
 
-BACKGROUND_VIDEO = "backgroundtest.mp4"  # Vidéo de fond 9:16 à fournir
+BACKGROUND_VIDEO = "background.mp4"  # Vidéo de fond 9:16 à fournir
 OUTPUT_VIDEO = "tiktok_final.mp4"
 LAST_NEWS_FILE = "last_news.json"  # Fichier pour stocker la dernière actualité traitée
 
