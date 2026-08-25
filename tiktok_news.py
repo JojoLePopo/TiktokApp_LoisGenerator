@@ -40,7 +40,8 @@ load_dotenv()
 GEMINI_KEY = os.getenv("GEMINI_KEY")
 
 VIE_PUBLIQUE_RSS = "https://www.vie-publique.fr/lois-feeds.xml"
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/interactions"
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash").strip()
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1/models/{GEMINI_MODEL}:generateContent"
 
 
 # ============================================================
@@ -49,13 +50,20 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/interactions"
 
 def _gemini_request(prompt: str) -> str:
     """Envoie un prompt à Gemini avec retry en cas de rate-limit."""
+    if not GEMINI_KEY:
+        raise RuntimeError("GEMINI_KEY est absent. Ajoute ta clé API dans le fichier .env.")
+
     headers = {
         "Content-Type": "application/json",
         "x-goog-api-key": GEMINI_KEY,
     }
     payload = {
-        "model": "gemini-3.1-flash-lite-preview",
-        "input": [{"role": "user", "content": prompt}],
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": prompt}],
+            }
+        ],
     }
 
     for attempt in range(5):
@@ -65,17 +73,26 @@ def _gemini_request(prompt: str) -> str:
             print(f"   ⏳ Rate-limit Gemini, nouvelle tentative dans {wait}s...")
             time.sleep(wait)
             continue
-        resp.raise_for_status()
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError as exc:
+            raise RuntimeError(
+                f"Erreur Gemini {resp.status_code}: {resp.text.strip() or 'réponse vide'}"
+            ) from exc
         break
     else:
         raise RuntimeError("Rate-limit Gemini dépassé après 5 tentatives.")
 
     data = resp.json()
     try:
-        for item in data["outputs"]:
-            if item.get("type") == "text":
-                return item["text"].strip()
-        raise KeyError("Aucun élément de type 'text' dans outputs")
+        candidates = data.get("candidates", [])
+        for candidate in candidates:
+            content = candidate.get("content", {})
+            for part in content.get("parts", []):
+                text = part.get("text")
+                if text:
+                    return text.strip()
+        raise KeyError("Aucun texte exploitable dans candidates")
     except (KeyError, IndexError, TypeError) as exc:
         raise RuntimeError(f"Réponse Gemini inattendue : {data}") from exc
 
@@ -126,13 +143,13 @@ def rewrite_with_gemini(loi: dict) -> str:
         "Transforme l'actualité législative suivante en un script TikTok \n"
         "L'objectif est de rendre le sujet captivant et compréhensible pour un public non spécialisé. \n"
         "Le script DOIT contenir :\n"
-        "1. Une ACCROCHE impactante, en mentionnant le titre de la loi : 'Une nouvelle loi vient d'être votée, '"
+        "1. Une ACCROCHE impactante, en mentionnant le titre de la loi, "
         "laisse moi t'expliquer en moins d'une minute !'.\n"
-        "2. Un RÉSUMÉ CLAIR, rapide et accessible de ce que ça change concrètement, le texte doit faire environ 110 mots (pas plus de 150), et être rédigé de manière à ce que même quelqu'un sans aucune connaissance juridique puisse comprendre les impacts majeurs de la loi\n"
+        "2. Un RÉSUMÉ CLAIR, rapide et accessible de ce que ça change concrètement, le texte doit faire environ 110 mots, et être rédigé de manière à ce que même quelqu'un sans aucune connaissance juridique puisse comprendre les impacts majeurs de la loi\n"
         "Un exemple concret d'application de la loi dans la vie quotidienne pour rendre ça plus vivant.\n"
         "3. Une QUESTION finale engageante pour pousser les commentaires.\n\n"
         "Renvoie UNIQUEMENT le texte du script, sans indication de section, "
-        "sans hashtag, sans emoji superflu.\n\n"
+        "sans hashtag, sans emoji superflu. Garde un vocabulaire accessible et faconne tes phrases pour qu'elles soient percutantes et faciles à comprendre.\n\n"
         f"Titre : {loi['title']}\n"
         f"Résumé : {loi['summary']}\n"
         f"Date de publication : {loi['published']}\n"
@@ -149,10 +166,10 @@ def rewrite_with_gemini(loi: dict) -> str:
 AUDIO_PATH = "voiceover.mp3"
 # Voix françaises naturelles : fr-FR-VivienneMultilingualNeural (femme),
 #                               fr-FR-RemyMultilingualNeural (homme)
-EDGE_VOICE = os.getenv("EDGE_VOICE", "fr-FR-VivienneMultilingualNeural")
+EDGE_VOICE = os.getenv("EDGE_VOICE", "fr-FR-RemyMultilingualNeural")
 TIKTOK_VOICE = os.getenv("TIKTOK_VOICE", "FR_MALE_2")
-PRIMARY_TTS_PROVIDER = os.getenv("PRIMARY_TTS_PROVIDER", "edge").strip().lower()
-FALLBACK_TTS_PROVIDER = os.getenv("FALLBACK_TTS_PROVIDER", "tiktok").strip().lower()
+PRIMARY_TTS_PROVIDER = os.getenv("PRIMARY_TTS_PROVIDER", "tiktok").strip().lower()
+FALLBACK_TTS_PROVIDER = os.getenv("FALLBACK_TTS_PROVIDER", "edge").strip().lower()
 
 
 def _extract_source_words_with_punctuation(text: str) -> list:

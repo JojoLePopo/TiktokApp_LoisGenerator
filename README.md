@@ -33,6 +33,12 @@ pip install -r requirements.txt
 GEMINI_KEY=ta_cle_api
 ```
 
+Si besoin, tu peux aussi fixer le modèle Gemini:
+
+```env
+GEMINI_MODEL=gemini-3.6-flash
+```
+
 Variables optionnelles prises en charge par le script:
 
 ```env
